@@ -29,26 +29,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
   }
 
   Future readFiles() async {
-    /*
-    final directory = await getApplicationDocumentsDirectory();
-    List<FileSystemEntity> fileList = await directory.list().toList();
-    allFileList.clear();
-    List<Map<int, dynamic>> fileNames = [];
-
-    fileList.forEach((file) {
-      if (file.path.contains('.jpg') || file.path.contains('.mp4')) {
-        allFileList.add(File(file.path));
-
-        String name = file.path.split('/').last.split('.').first;
-        fileNames.add({0: int.parse(name), 1: file.path.split('/').last});
-      }
-    });
-
-    if (fileNames.isNotEmpty) {
-      setState(() {});
-    }
-    */
-
     // Clean file list
     allFileList.clear();
 
@@ -56,10 +36,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
     DatabaseHelper.instance
         .fetchAllObservation()
         .then((List<Observation>? observations) {
-      if (observations == null) return;
 
-      for (var observation in observations) {
-        allFileList.add(observation);
+      if (observations != null) {
+        for (var observation in observations) {
+          allFileList.add(observation);
+        }
       }
 
       setState(() {

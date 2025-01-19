@@ -634,6 +634,9 @@ class _CameraScreenState extends State<CameraScreen>
                       _handleLocationPermission();
                       getPermissionStatus();
                     },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                    ),
                     child: const Padding(
                       padding: EdgeInsets.all(8.0),
                       child: Text(

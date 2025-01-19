@@ -164,6 +164,9 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
                       height: 50.0,
                     ),
                     ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                      ),
                       onPressed: (() async {
                         if (!_isCropped) {
                           final result = await showMaterialImageCropper(
@@ -199,6 +202,9 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
                       }),
                       child: const Text(
                         'Ok',
+                        style: TextStyle(
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ],
