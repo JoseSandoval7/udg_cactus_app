@@ -1,16 +1,39 @@
-# udg_cactus_app
+# UDG Cactus App
 
-A new Flutter project.
+A Flutter application for managing and tracking cacti.
 
-## Getting Started
+## Features
+- List and view details of different cacti.
+- Add, edit, and delete cacti records.
+- Track growth and care schedules.
 
-This project is a starting point for a Flutter application.
+## Installation
+1. Clone the repository:
+   ```sh
+   git clone https://github.com/JoseSandoval7/udg_cactus_app.git
+   ```
+2. Navigate to the project directory:
+   ```sh
+   cd udg_cactus_app
+   ```
+3. Install dependencies:
+   ```sh
+   flutter pub get
+   ```
+4. Run the app:
+   ```sh
+   flutter run
+   ```
 
-A few resources to get you started if this is your first Flutter project:
+## Requirements
+- Flutter SDK
+- Dart
+- Android Studio or VS Code (optional)
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Dependencies
+This project requires the following Flutter plugin:
+- [Native OpenCV](https://github.com/JoseSandoval7/native_opencv)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## License
+MIT License
+
