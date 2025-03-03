@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:udg_cactus_app/helpers/map_screen_arguments.dart';
 import 'package:udg_cactus_app/helpers/preview_screen_arguments.dart';
-import 'package:udg_cactus_app/helpers/processin_screen_arguments.dart';
+import 'package:udg_cactus_app/helpers/processing_screen_arguments.dart';
 import 'package:udg_cactus_app/screens/map_screen.dart';
 import 'package:udg_cactus_app/screens/processing_screen.dart';
 import '../screens/preview_screen.dart';

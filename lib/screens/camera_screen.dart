@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:image/image.dart' as img;
-import 'package:udg_cactus_app/helpers/processin_screen_arguments.dart';
+import 'package:udg_cactus_app/helpers/processing_screen_arguments.dart';
 import 'package:udg_cactus_app/helpers/route_generator.dart';
 import 'package:udg_cactus_app/models/observation_model.dart';
 import 'package:image_picker/image_picker.dart';
@@ -479,7 +479,7 @@ class _CameraScreenState extends State<CameraScreen>
                                       onNewCameraSelected(
                                           controller!.description);
                                     },
-                                    hint: const Text("Select Item"),
+                                    hint: const Text("Selecciona uno"),
                                   ),
                                 ),
                               ),
@@ -542,7 +542,7 @@ class _CameraScreenState extends State<CameraScreen>
                                   context, AppRoutes.home, (route) => false);
                             },
                             child: const Icon(
-                              Icons.close_rounded,
+                              Icons.arrow_back_rounded,
                               size: 35,
                               color: Colors.white70,
                             )),
@@ -613,7 +613,7 @@ class _CameraScreenState extends State<CameraScreen>
                   )
                 : const Center(
                     child: Text(
-                      'LOADING',
+                      'CARGANDO...',
                       style: TextStyle(color: Colors.white),
                     ),
                   )
@@ -622,7 +622,7 @@ class _CameraScreenState extends State<CameraScreen>
                 children: [
                   const Row(),
                   const Text(
-                    'Permission denied',
+                    'Permiso denegado',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 24,
@@ -640,7 +640,7 @@ class _CameraScreenState extends State<CameraScreen>
                     child: const Padding(
                       padding: EdgeInsets.all(8.0),
                       child: Text(
-                        'Give permission',
+                        'Conceder permisos',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 16,

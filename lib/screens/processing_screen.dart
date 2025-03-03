@@ -9,7 +9,7 @@ import 'package:udg_cactus_app/helpers/preview_screen_arguments.dart';
 import 'package:udg_cactus_app/helpers/route_generator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:udg_cactus_app/models/observation_model.dart';
-import '../helpers/processin_screen_arguments.dart';
+import '../helpers/processing_screen_arguments.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ProcessingScreen extends StatefulWidget {
@@ -257,6 +257,20 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
                   ),
                 )
               : Container(),
+          Align(
+            alignment: const Alignment(-0.95, -0.90),
+            child: InkWell(
+                onTap: () {
+                  Navigator.pushNamedAndRemoveUntil(
+                      context, AppRoutes.camera, (route) => false);
+                },
+                child: const Icon(
+                  Icons.arrow_back_rounded,
+                  size: 35,
+                  color: Colors.white70,
+                ),
+            ),
+          ),
         ],
       ),
     );

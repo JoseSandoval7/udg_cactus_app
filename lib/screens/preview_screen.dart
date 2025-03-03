@@ -121,8 +121,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
     Color pixel = Color(widget.arguments.model.pixelColor);
 
     return PopScope(
-      canPop: true,
-      onPopInvoked: (didPop) async {},
+      canPop: false,
       child: Scaffold(
         backgroundColor: Colors.white,
         body: CustomScrollView(
@@ -135,7 +134,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
               backgroundColor: AppColors.MAIN_COLOR,
               leading: IconButton(
                 icon: const Icon(
-                  Icons.arrow_back,
+                  Icons.arrow_back_rounded,
                   size: 25,
                   color: Colors.white,
                 ),
@@ -205,31 +204,31 @@ class _PreviewScreenState extends State<PreviewScreen> {
                                     inputFormatters: [
                                       LengthLimitingTextInputFormatter(20)
                                     ],
-                                    onTapOutside: (event) async =>
-                                        setState(() => _isEnable = false),
-                                    onSubmitted: (value) async {
-                                      Observation newObservation = Observation(
-                                          id: widget.arguments.model.id,
-                                          tag: value,
-                                          date: widget.arguments.model.date,
-                                          latitude:
-                                              widget.arguments.model.latitude,
-                                          longitude:
-                                              widget.arguments.model.longitude,
-                                          address:
-                                              widget.arguments.model.address,
-                                          image: widget.arguments.model.image,
-                                          zoom: widget.arguments.model.zoom,
-                                          pixelColor: widget
-                                              .arguments.model.pixelColor);
+                                    onTapOutside: (event) async {
+                                      Observation newObservation = widget.arguments.model.copyWith(tag: _textController!.text);
+
+                                      setState(() {
+                                        text = _textController!.text;
+                                        _isEnable = false;
+                                      });
+
+                                      if(widget.arguments.toSave && !_isSaved) return;
 
                                       await DatabaseHelper.instance
                                           .updateObservation(newObservation);
+                                    },
+                                    onSubmitted: (value) async {
+                                      Observation newObservation = widget.arguments.model.copyWith(tag: value);
 
                                       setState(() {
                                         text = value;
                                         _isEnable = false;
                                       });
+
+                                      if(widget.arguments.toSave && !_isSaved) return;
+
+                                      await DatabaseHelper.instance
+                                          .updateObservation(newObservation);
                                     },
                                   ),
                                 )
@@ -534,8 +533,23 @@ class _PreviewScreenState extends State<PreviewScreen> {
                                     onPressed: () async {
                                       if (_isSaved) return;
 
+                                      Observation newObservation = Observation(
+                                          id: widget.arguments.model.id,
+                                          tag: text!,
+                                          date: widget.arguments.model.date,
+                                          latitude:
+                                          widget.arguments.model.latitude,
+                                          longitude:
+                                          widget.arguments.model.longitude,
+                                          address:
+                                          widget.arguments.model.address,
+                                          image: widget.arguments.model.image,
+                                          zoom: widget.arguments.model.zoom,
+                                          pixelColor: widget
+                                              .arguments.model.pixelColor);
+
                                       DatabaseHelper.instance.addObservation(
-                                          widget.arguments.model);
+                                          newObservation);
 
                                       setState(() {
                                         _isSaved = true;

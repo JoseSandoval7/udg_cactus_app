@@ -46,4 +46,28 @@ class Observation {
         'zoom': zoom,
         'pixelColor': pixelColor,
       };
+
+  Observation copyWith({
+    int? id,
+    String? tag,
+    DateTime? date,
+    double? latitude,
+    double? longitude,
+    String? address,
+    Uint8List? image,
+    Uint8List? zoom,
+    int? pixelColor,
+  }) {
+    return Observation(
+      id: id ?? this.id,
+      tag: tag ?? this.tag,
+      date: date ?? this.date,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      address: address ?? this.address,
+      image: image ?? this.image,
+      zoom: zoom ?? this.zoom,
+      pixelColor: pixelColor ?? this.pixelColor,
+    );
+  }
 }
