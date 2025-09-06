@@ -78,8 +78,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
     );
 
     AlertDialog alert = AlertDialog(
-      title: Text("Delete all files"),
-      content: Text("¿Are you sure you want to delete all files?"),
+      title: Text("Eliminar registros"),
+      content: Text("¿Estas seguro que deseas eliminar todos los registros?"),
       actions: [
         okButton,
         cancelButton,

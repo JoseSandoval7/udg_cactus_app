@@ -12,6 +12,19 @@ import 'package:udg_cactus_app/models/observation_model.dart';
 import '../helpers/processing_screen_arguments.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+extension ColorUtils on Color {
+  String toHex() {
+    final alpha = (a * 255).toInt();
+    final red = (r * 255).toInt();
+    final green = (g * 255).toInt();
+    final blue = (b * 255).toInt();
+    // Combine the components into a single int using bit shifting
+    final hex = (alpha << 24) | (red << 16) | (green << 8) | blue;
+
+    return '0x${hex.toRadixString(16).substring(2)}';
+  }
+}
+
 class ProcessingScreen extends StatefulWidget {
   final ProcessingScreenArguments arguments;
 
@@ -127,7 +140,7 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
                               left: 10,
                               top: 100,
                               child: Text(
-                                '$_selectedColor',
+                                _selectedColor.toHex(),
                                 style: const TextStyle(
                                     color: Colors.white,
                                     backgroundColor: Colors.black54),

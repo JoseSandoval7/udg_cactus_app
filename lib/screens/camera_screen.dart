@@ -319,7 +319,7 @@ class _CameraScreenState extends State<CameraScreen>
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
-                              InkWell(
+                              GestureDetector(
                                 onTap: () {
                                   setState(() {
                                     _isCameraInitialized = false;
@@ -350,7 +350,7 @@ class _CameraScreenState extends State<CameraScreen>
                                   ],
                                 ),
                               ),
-                              InkWell(
+                              GestureDetector(
                                 onTap: () async {
                                   setState(() {
                                     _isPictureTaken = true;
@@ -390,7 +390,7 @@ class _CameraScreenState extends State<CameraScreen>
                                   ],
                                 ),
                               ),
-                              InkWell(
+                              GestureDetector(
                                 onTap: () async {
                                   bool ok;
                                   ok = await _pickImageFromGallery();
@@ -485,7 +485,7 @@ class _CameraScreenState extends State<CameraScreen>
                               ),
                               Padding(
                                 padding: const EdgeInsets.only(right: 10.0),
-                                child: InkWell(
+                                child: GestureDetector(
                                   onTap: () async {
                                     setState(() {
                                       _isFlashOn =
@@ -536,7 +536,7 @@ class _CameraScreenState extends State<CameraScreen>
                       ),
                       Align(
                         alignment: const Alignment(-0.95, -0.95),
-                        child: InkWell(
+                        child: GestureDetector(
                             onTap: () {
                               Navigator.pushNamedAndRemoveUntil(
                                   context, AppRoutes.home, (route) => false);
