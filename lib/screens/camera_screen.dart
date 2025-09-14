@@ -4,7 +4,6 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:image/image.dart' as img;
 import 'package:udg_cactus_app/helpers/processing_screen_arguments.dart';
 import 'package:udg_cactus_app/helpers/route_generator.dart';
 import 'package:udg_cactus_app/models/observation_model.dart';
@@ -25,7 +24,8 @@ class _CameraScreenState extends State<CameraScreen>
 
   File? _imageFile;
   Image? _thumbnail;
-  late Position currentPosition;
+  Position? currentPosition;
+  bool _isGettingLocation = false;
 
   // Initial value
   bool _isCameraInitialized = false;
@@ -103,70 +103,139 @@ class _CameraScreenState extends State<CameraScreen>
     bool serviceEnabled;
     LocationPermission permission;
 
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text(
-              'Location services are disabled. Please enable the services')));
-      return;
-    }
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Location permissions are denied')));
+    try {
+      serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text(
+                  'Location services are disabled. Please enable the services')));
+        }
+        setState(() {
+          _isLocationPermissionGranted = false;
+        });
         return;
       }
-    }
-    if (permission == LocationPermission.deniedForever) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text(
-              'Location permissions are permanently denied, we cannot request permissions.')));
-      return;
-    }
+      
+      permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Location permissions are denied')));
+          }
+          setState(() {
+            _isLocationPermissionGranted = false;
+          });
+          return;
+        }
+      }
+      
+      if (permission == LocationPermission.deniedForever) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text(
+                  'Location permissions are permanently denied, we cannot request permissions.')));
+        }
+        setState(() {
+          _isLocationPermissionGranted = false;
+        });
+        return;
+      }
 
-    setState(() {
-      _isLocationPermissionGranted = true;
-    });
+      setState(() {
+        _isLocationPermissionGranted = true;
+      });
+      
+      // Try to get initial location after permission granted
+      getLocation();
+    } catch (e) {
+      print('Error handling location permission: $e');
+      setState(() {
+        _isLocationPermissionGranted = false;
+      });
+    }
   }
 
-  Future<void> getLocation() async {
-    currentPosition = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
+  Future<bool> getLocation() async {
+    if (_isGettingLocation) return false;
+    
+    _isGettingLocation = true;
+    try {
+      // Try to get current position with high accuracy (not best, as it may timeout)
+      currentPosition = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+      print('Got location: Lat=${currentPosition?.latitude}, Lon=${currentPosition?.longitude}, Accuracy=${currentPosition?.accuracy}m');
+      return true;
+    } catch (e) {
+      print('Error getting current location: $e');
+      
+      // Try to get last known position first as fallback
+      try {
+        Position? lastPosition = await Geolocator.getLastKnownPosition();
+        if (lastPosition != null && 
+            (lastPosition.latitude != 0.0 || lastPosition.longitude != 0.0)) {
+          currentPosition = lastPosition;
+          print('Using last known location: Lat=${currentPosition?.latitude}, Lon=${currentPosition?.longitude}');
+          return true;
+        }
+      } catch (e2) {
+        print('Error getting last known position: $e2');
+      }
+      
+      // Final attempt with lower accuracy but more likely to succeed
+      try {
+        currentPosition = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.medium);
+        print('Got medium accuracy location: Lat=${currentPosition?.latitude}, Lon=${currentPosition?.longitude}');
+        return true;
+      } catch (e3) {
+        print('Final attempt failed: $e3');
+      }
+      
+      print('Failed to get any valid location');
+      return false;
+    } finally {
+      _isGettingLocation = false;
+    }
   }
 
   Future<XFile?> takePicture() async {
     final CameraController? cameraController = controller;
 
-    if (cameraController!.value.isTakingPicture) {
+    if (cameraController == null || !cameraController.value.isInitialized) {
+      print('Camera controller not initialized');
+      return null;
+    }
+
+    if (cameraController.value.isTakingPicture) {
       // A capture is already pending, do nothing.
       return null;
     }
 
     try {
+      // Set flash mode before taking picture
+      await cameraController.setFlashMode(_currentFlashMode ?? FlashMode.off);
+      
       XFile file = await cameraController.takePicture();
-
-      XFile rotatedFile = await rotateImage(file);
-
-      return rotatedFile;
+      return file; // Return directly without rotation
     } on CameraException catch (e) {
       print('Error occured while taking picture: $e');
+      setState(() {
+        _isPictureTaken = false;
+      });
+      return null;
+    } catch (e) {
+      print('Unexpected error taking picture: $e');
+      setState(() {
+        _isPictureTaken = false;
+      });
       return null;
     }
   }
 
-  Future<XFile> rotateImage(XFile imageFile) async {
-    // Load the image using the image package
-    img.Image image = img.decodeImage(File(imageFile.path).readAsBytesSync())!;
-
-    // Rotate the image based on the device orientation
-    img.Image rotatedImage = img.copyRotate(image, angle: 0);
-
-    File(imageFile.path).writeAsBytesSync(img.encodeJpg(rotatedImage));
-
-    return XFile(imageFile.path);
-  }
+  // Removed unnecessary rotation function - camera already handles orientation
 
   void onNewCameraSelected(CameraDescription cameraDescription) async {
     final previousCameraController = controller;
@@ -175,6 +244,7 @@ class _CameraScreenState extends State<CameraScreen>
       cameraDescription,
       currentResolutionPreset,
       imageFormatGroup: ImageFormatGroup.jpeg,
+      enableAudio: false, // Disable audio for photo mode
     );
 
     // Dispose the previous controller
@@ -189,32 +259,37 @@ class _CameraScreenState extends State<CameraScreen>
 
     // Update UI if controller updated
     cameraController.addListener(() {
-      if (mounted) setState(() {});
+      if (mounted && cameraController.value.hasError) {
+        print('Camera error: ${cameraController.value.errorDescription}');
+      }
     });
 
     // Initialize controller
     try {
       await cameraController.initialize();
+      
+      if (!mounted) return;
+      
+      // Get zoom levels
+      _maxAvailableZoom = await cameraController.getMaxZoomLevel();
+      _minAvailableZoom = await cameraController.getMinZoomLevel();
+      
+      // Set initial flash mode
+      await cameraController.setFlashMode(FlashMode.off);
+      
+      // Update the UI
+      setState(() {
+        _isCameraInitialized = true;
+        _isFlashOn = false;
+        _currentZoomLevel = 1.0;
+      });
     } on CameraException catch (e) {
       print('Error initializing camera: $e');
-    }
-
-    cameraController
-        .getMaxZoomLevel()
-        .then((value) => _maxAvailableZoom = value);
-
-    cameraController
-        .getMinZoomLevel()
-        .then((value) => _minAvailableZoom = value);
-
-    await cameraController.setFlashMode(FlashMode.off);
-
-    // Update the boolean
-    if (mounted) {
-      setState(() {
-        _isCameraInitialized = controller!.value.isInitialized;
-        _isFlashOn = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isCameraInitialized = false;
+        });
+      }
     }
   }
 
@@ -234,6 +309,7 @@ class _CameraScreenState extends State<CameraScreen>
 
   @override
   void initState() {
+    super.initState();
     // Hide the status bar
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     // Lock orientation
@@ -241,9 +317,31 @@ class _CameraScreenState extends State<CameraScreen>
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
-    _handleLocationPermission();
-    getPermissionStatus();
-    super.initState();
+    _initializePermissions();
+  }
+  
+  Future<void> _initializePermissions() async {
+    await _handleLocationPermission();
+    await getPermissionStatus();
+    // Try to get initial location and keep updating it
+    if (_isLocationPermissionGranted) {
+      getLocation();
+      // Update location periodically for better accuracy
+      _startLocationUpdates();
+    }
+  }
+  
+  void _startLocationUpdates() {
+    // Update location every 30 seconds for better accuracy when taking photos
+    Future.delayed(const Duration(seconds: 30), () {
+      if (mounted && _isLocationPermissionGranted && !_isGettingLocation) {
+        getLocation().then((_) {
+          if (mounted) {
+            _startLocationUpdates(); // Continue updating
+          }
+        });
+      }
+    });
   }
 
   @override
@@ -274,6 +372,7 @@ class _CameraScreenState extends State<CameraScreen>
       DeviceOrientation.portraitDown,
     ]);
     controller?.dispose();
+    controller = null;
     super.dispose();
   }
 
@@ -321,6 +420,8 @@ class _CameraScreenState extends State<CameraScreen>
                             children: [
                               GestureDetector(
                                 onTap: () {
+                                  if (!_isCameraInitialized || _isPictureTaken) return;
+                                  
                                   setState(() {
                                     _isCameraInitialized = false;
                                   });
@@ -352,33 +453,70 @@ class _CameraScreenState extends State<CameraScreen>
                               ),
                               GestureDetector(
                                 onTap: () async {
+                                  // Prevent multiple taps
+                                  if (_isPictureTaken) return;
+                                  
                                   setState(() {
                                     _isPictureTaken = true;
                                   });
 
-                                  XFile? rawImage = await takePicture();
+                                  try {
+                                    XFile? rawImage = await takePicture();
+                                    
+                                    if (rawImage == null) {
+                                      setState(() {
+                                        _isPictureTaken = false;
+                                      });
+                                      return;
+                                    }
 
-                                  controller!.pausePreview();
+                                    // Get location in parallel with preview pause
+                                    final locationFuture = getLocation();
+                                    controller?.pausePreview();
+                                    
+                                    setState(() {
+                                      _imageFile = File(rawImage.path);
+                                    });
 
-                                  setState(() {
-                                    _imageFile = File(rawImage!.path);
-                                  });
+                                    final locationSuccess = await locationFuture;
+                                    
+                                    if (!locationSuccess || currentPosition == null) {
+                                      // If location failed, show error and return
+                                      setState(() {
+                                        _isPictureTaken = false;
+                                      });
+                                      controller?.resumePreview();
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Unable to get location. Please try again.'),
+                                            duration: Duration(seconds: 2),
+                                          ),
+                                        );
+                                      }
+                                      return;
+                                    }
 
-                                  await getLocation();
+                                    final arguments = ProcessingScreenArguments(
+                                        imageFile: _imageFile!,
+                                        position: currentPosition!);
 
-                                  final arguments = ProcessingScreenArguments(
-                                      imageFile: _imageFile!,
-                                      position: currentPosition);
+                                    if (!context.mounted) return;
 
-                                  if (!context.mounted) return;
+                                    Navigator.of(context).pop();
 
-                                  Navigator.of(context).pop();
-
-                                  Navigator.pushNamed(
-                                    context,
-                                    AppRoutes.processing,
-                                    arguments: arguments,
-                                  );
+                                    Navigator.pushNamed(
+                                      context,
+                                      AppRoutes.processing,
+                                      arguments: arguments,
+                                    );
+                                  } catch (e) {
+                                    print('Error in camera tap: $e');
+                                    setState(() {
+                                      _isPictureTaken = false;
+                                    });
+                                    controller?.resumePreview();
+                                  }
                                 },
                                 child: const Stack(
                                   alignment: Alignment.center,
@@ -397,11 +535,24 @@ class _CameraScreenState extends State<CameraScreen>
 
                                   if (!ok) return;
 
-                                  await getLocation();
+                                  final locationSuccess = await getLocation();
+                                  
+                                  if (!locationSuccess || currentPosition == null) {
+                                    // If location failed, show error and return
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Unable to get location. Please try again.'),
+                                          duration: Duration(seconds: 2),
+                                        ),
+                                      );
+                                    }
+                                    return;
+                                  }
 
                                   final arguments = ProcessingScreenArguments(
                                       imageFile: _imageFile!,
-                                      position: currentPosition);
+                                      position: currentPosition!);
 
                                   if (!context.mounted) return;
                                   Navigator.pushNamed(

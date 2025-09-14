@@ -141,19 +141,38 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           endActionPane: ActionPane(
                             motion: const StretchMotion(),
                             children: [
-                              SlidableAction(
-                                onPressed: (context) async {
-                                  DatabaseHelper.instance
-                                      .deleteObservation(observation);
+                              CustomSlidableAction(
+                                  onPressed: (context) async {
+                                    DatabaseHelper.instance
+                                        .deleteObservation(observation);
 
-                                  readFiles();
+                                    readFiles();
 
-                                  setState(() {});
-                                },
-                                backgroundColor: Colors.red,
-                                icon: Icons.delete,
-                                label: 'Eliminar',
+                                    setState(() {});
+                                  },
+                                  backgroundColor: Colors.red,
+                                  child: Container(
+                                    alignment: Alignment.center,
+                                    child: const Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.delete, color: Colors.white, size: 24),
+                                        Flexible(
+                                          child: Text(
+                                            'Eliminar',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                               ),
+
                             ],
                           ),
                           child: Card(
