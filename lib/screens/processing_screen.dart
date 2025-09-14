@@ -350,26 +350,45 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
   }
 
   Future<String> getAddress() async {
-    List<Placemark> placemark = await placemarkFromCoordinates(
-        widget.arguments.position.latitude,
-        widget.arguments.position.longitude);
+    try {
+      // Check if coordinates are invalid (0,0)
+      if (widget.arguments.position.latitude == 0.0 && 
+          widget.arguments.position.longitude == 0.0) {
+        return "Location not available";
+      }
+      
+      List<Placemark> placemark = await placemarkFromCoordinates(
+          widget.arguments.position.latitude,
+          widget.arguments.position.longitude);
 
-    String address = "";
+      if (placemark.isEmpty) {
+        return "Unknown Place";
+      }
 
-    if (placemark[0].street != "") address = "${placemark[0].street}";
+      String address = "";
 
-    if (placemark[0].subAdministrativeArea != "") {
-      address = "$address, ${placemark[0].subAdministrativeArea}";
+      if (placemark[0].street != null && placemark[0].street != "") {
+        address = "${placemark[0].street}";
+      }
+
+      if (placemark[0].subAdministrativeArea != null && 
+          placemark[0].subAdministrativeArea != "") {
+        address = "$address, ${placemark[0].subAdministrativeArea}";
+      }
+
+      if (placemark[0].postalCode != null && 
+          placemark[0].postalCode != "") {
+        address = "$address, ${placemark[0].postalCode}";
+      }
+
+      if (address == "") {
+        return "Unknown Place";
+      }
+
+      return address;
+    } catch (e) {
+      print("Error getting address: $e");
+      return "Location not available";
     }
-
-    if (placemark[0].postalCode != "") {
-      address = "$address, ${placemark[0].postalCode}";
-    }
-
-    if (address == "") {
-      return "Unknown Place";
-    }
-
-    return address;
   }
 }
